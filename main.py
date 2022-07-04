@@ -2,9 +2,11 @@ import oracledb
 import os
 import uuid
 import base64
-from PIL import Image
+import configparser
 
 oracledb.init_oracle_client()
+cfg = configparser.ConfigParser()
+cfg.read('cfg.ini')
 
 def write_blob():
 
@@ -21,7 +23,7 @@ def write_blob():
     text_file.close()
 
     return blob
-
+cfg['DEFAULT']['Password']
 def conectarOracle(schema, password, host, servicName):
     url = schema + '/' + password + '@' + host + '/' + servicName
     connection = oracledb.connect(url)
@@ -112,7 +114,7 @@ def main():
     path = input('Digite a pasta: ')
 
     print('**************************************')
-    con = conectarOracle('PMBALSANOVA', 'bdesp1974', 'localhost', 'eqplano')
+    con = conectarOracle(cfg['DEFAULT']['User'], cfg['DEFAULT']['Password'], cfg['DEFAULT']['Host'], cfg['DEFAULT']['Service'])
     cur = con.cursor()
     sql = 'select pi.codentidade, pi.codpessoafisica, pi.nmimagem, pi.arquivo from SRH_PESSOAFISICAIMAGEM pi where arquivo is not null'
     resp = cur.execute(sql)

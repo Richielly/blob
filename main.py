@@ -2,6 +2,7 @@ import oracledb
 import os
 import uuid
 import base64
+from PIL import Image
 
 oracledb.init_oracle_client()
 
@@ -31,6 +32,24 @@ def write_file(data, filename):
     with open(filename, 'wb') as f:
         f.write(data)
 
+def write_file_png(data, filename):
+    with open(filename, 'rb') as f:
+        f.write(data)
+
+def write_binario(data, filename):
+    with open(filename, "wb") as file:
+        file.write(data)
+
+def binario_to_png(binario):
+    file = open(binario, 'rb')
+    byte = file.read()
+    file.close()
+
+    decodeit = open('hello_level.jpeg', 'wb')
+    decodeit.write(base64.b64decode((byte)))
+    decodeit.close()
+
+
 def convertData(filename):
     # Convert images or files data to binary format
     with open(filename, 'rb', encoding='latin-1') as file:
@@ -41,32 +60,64 @@ def convertData(filename):
 def criarDiretorioArquivo(path, ano, data):
 
     caminho = path + '\\' + ano + '\\'
-    arquivo = caminho + str(uuid.uuid1()) + '.pdf'
+    arquivo = caminho + str(uuid.uuid1()) + '.png'
+    # arquivo = caminho + str(uuid.uuid1()) + '.pdf'
     if not os.path.exists(caminho):
         os.makedirs(caminho)
     if not os.path.exists(arquivo):
-        write_file(data, arquivo)
+        #write_file(data, arquivo) # Pdf
+        write_binario(data, arquivo)
         return arquivo
 
-def main():
+def criarDiretorioArquivo_png(path, entidade, cod_pessoa, extensao, data):
 
-    path = input('Digite a pasta: ')
+    caminho = path + '\\' + str(entidade) + '\\'
 
-    print('**************************************')
-    con = conectarOracle('NFSPRODUCAO', 'bdesp1974', 'localhost', 'eqplano')
-    cur = con.cursor()
-    sql = 'select pdfnota from copianotaimagem'
-    resp = cur.execute(sql)
+    ext = str(extensao).split('.')
+    ext = ext[-1]
+    nome = str(extensao).replace('.' + ext,'')
 
+    arquivo = caminho + str(entidade) + '-' + str(cod_pessoa) + '-' + str(nome) + f'.{ext}'
+    if not os.path.exists(caminho):
+        os.makedirs(caminho)
+    if not os.path.exists(arquivo):
+        write_binario(data, arquivo)
+        return arquivo
+
+def extrair_arquivos_pdf(path, resp):
     count = 0
 
     for pdf in resp:
         file = criarDiretorioArquivo(path, "2022", pdf[0].read())
         print('**************************************')
         print(file)
-        count+=1
+        count += 1
     print('******************************************')
     print('Total de arquivos migrados: ', count)
+
+def extrair_arquivos_png(path, resp):
+    count = 0
+
+    for png in resp:
+        print(png)
+        file = criarDiretorioArquivo_png(path, png[0], png[1], png[2], png[3].read())
+        print('**************************************')
+        print(file)
+        count += 1
+    print('******************************************')
+    print('Total de arquivos migrados: ', count)
+
+def main():
+
+    path = input('Digite a pasta: ')
+
+    print('**************************************')
+    con = conectarOracle('PMBALSANOVA', 'bdesp1974', 'localhost', 'eqplano')
+    cur = con.cursor()
+    sql = 'select pi.codentidade, pi.codpessoafisica, pi.nmimagem, pi.arquivo from SRH_PESSOAFISICAIMAGEM pi where arquivo is not null'
+    resp = cur.execute(sql)
+
+    extrair_arquivos_png(path, resp)
 
 if __name__ == '__main__':
     main()

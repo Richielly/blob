@@ -1,10 +1,13 @@
-import oracledb
+import cx_Oracle
 import os
-import uuid
+# import uuid
 import base64
 import configparser
+# import secrets
 
-oracledb.init_oracle_client()
+# secrets.token_hex(16)
+
+# oracledb.init_oracle_client()
 cfg = configparser.ConfigParser()
 cfg.read('cfg.ini')
 
@@ -23,11 +26,11 @@ def write_blob():
     text_file.close()
 
     return blob
-cfg['DEFAULT']['Password']
+
 def conectarOracle(schema, password, host, servicName):
     url = schema + '/' + password + '@' + host + '/' + servicName
-    connection = oracledb.connect(url)
-    print('Conectando no Oracle! ' + connection.version)
+    connection = cx_Oracle.connect(url)
+    # print('Conectando no Oracle! ' + connection.version)
     return connection
 
 def write_file(data, filename):
@@ -51,7 +54,6 @@ def binario_to_png(binario):
     decodeit.write(base64.b64decode((byte)))
     decodeit.close()
 
-
 def convertData(filename):
     # Convert images or files data to binary format
     with open(filename, 'rb', encoding='latin-1') as file:
@@ -59,17 +61,17 @@ def convertData(filename):
 
     return binary_data
 
-def criarDiretorioArquivo(path, ano, data):
-
-    caminho = path + '\\' + ano + '\\'
-    arquivo = caminho + str(uuid.uuid1()) + '.png'
-    # arquivo = caminho + str(uuid.uuid1()) + '.pdf'
-    if not os.path.exists(caminho):
-        os.makedirs(caminho)
-    if not os.path.exists(arquivo):
-        #write_file(data, arquivo) # Pdf
-        write_binario(data, arquivo)
-        return arquivo
+# def criarDiretorioArquivo(path, ano, data):
+#
+#     caminho = path + '\\' + ano + '\\'
+#     arquivo = caminho + str(uuid.uuid1()) + '.png'
+#     # arquivo = caminho + str(uuid.uuid1()) + '.pdf'
+#     if not os.path.exists(caminho):
+#         os.makedirs(caminho)
+#     if not os.path.exists(arquivo):
+#         #write_file(data, arquivo) # Pdf
+#         write_binario(data, arquivo)
+#         return arquivo
 
 def criarDiretorioArquivo_png(path, entidade, cod_pessoa, extensao, data):
 
@@ -77,7 +79,7 @@ def criarDiretorioArquivo_png(path, entidade, cod_pessoa, extensao, data):
 
     ext = str(extensao).split('.')
     ext = ext[-1]
-    nome = str(extensao).replace('.' + ext,'')
+    nome = str(extensao).replace('.' + ext, '')
 
     arquivo = caminho + str(entidade) + '-' + str(cod_pessoa) + '-' + str(nome) + f'.{ext}'
     if not os.path.exists(caminho):
@@ -86,40 +88,41 @@ def criarDiretorioArquivo_png(path, entidade, cod_pessoa, extensao, data):
         write_binario(data, arquivo)
         return arquivo
 
-def extrair_arquivos_pdf(path, resp):
-    count = 0
-
-    for pdf in resp:
-        file = criarDiretorioArquivo(path, "2022", pdf[0].read())
-        print('**************************************')
-        print(file)
-        count += 1
-    print('******************************************')
-    print('Total de arquivos migrados: ', count)
+# def extrair_arquivos_pdf(path, resp):
+#     count = 0
+#
+#     for pdf in resp:
+#         file = criarDiretorioArquivo(path, "2022", pdf[0].read())
+#         print('**************************************')
+#         print(file)
+#         count += 1
+#     print('******************************************')
+#     print('Total de arquivos migrados: ', count)
 
 def extrair_arquivos_png(path, resp):
     count = 0
 
     for png in resp:
-        print(png)
+        # print(png)
         file = criarDiretorioArquivo_png(path, png[0], png[1], png[2], png[3].read())
-        print('**************************************')
-        print(file)
+        # print('**************************************')
+        # print(file)
         count += 1
-    print('******************************************')
-    print('Total de arquivos migrados: ', count)
+    # print('******************************************')
+    # print('Total de arquivos migrados: ', count)
 
 def main():
 
-    path = input('Digite a pasta: ')
+    # path = input('Digite a pasta: ')
 
-    print('**************************************')
+    # print('**************************************')
     con = conectarOracle(cfg['DEFAULT']['User'], cfg['DEFAULT']['Password'], cfg['DEFAULT']['Host'], cfg['DEFAULT']['Service'])
     cur = con.cursor()
     sql = 'select pi.codentidade, pi.codpessoafisica, pi.nmimagem, pi.arquivo from SRH_PESSOAFISICAIMAGEM pi where arquivo is not null'
     resp = cur.execute(sql)
 
-    extrair_arquivos_png(path, resp)
+    extrair_arquivos_png(cfg['DEFAULT']['Path'], resp)
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+main()
+# pyinstaller --name ExtractBlob --onefile --console main.py
